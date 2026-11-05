@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/env.php';
 // Include this at the very top of every page, instead of session_start().
 
 if(session_status() === PHP_SESSION_NONE){

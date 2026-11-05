@@ -9,50 +9,71 @@ if(isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/captcha.php");
 
-$message = "";
+$message     = "";
+$messageType = "error";
+$showResend  = false;
 
 if(isset($_GET['expired'])){
     $message = "You were logged out for being inactive. Please log in again.";
+}
+
+if(isset($_GET['registered'])){
+    $message     = "Account created! Check your email for a verification link before logging in.";
+    $messageType = "success";
 }
 
 if(isset($_POST['login'])){
 
     csrf_require();
 
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
+    $message     = "";
+    $messageType = "error";
 
-    // Prepared statement to prevent SQL injection
-    $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
-    mysqli_stmt_bind_param($stmt, "s", $email);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    if(mysqli_num_rows($result) == 1){
+    if(!turnstile_verify()){
+
+        $message = "Please complete the security check.";
+
+    }else{
+
+        $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
         $user = mysqli_fetch_assoc($result);
 
-        if(password_verify($password, $user['password'])){
+        // One message for "no such account" and "wrong password", so attackers
+        // can't use the form to discover which emails are registered.
+        if(!$user || !password_verify($password, $user['password'])){
+
+            $message = "Invalid email or password.";
+
+        }elseif(empty($user['email_verified_at'])){
+
+            // Only shown after the correct password, so it leaks nothing
+            $message    = "Please verify your email before logging in. Check your inbox for the link.";
+            $showResend = true;
+
+        }else{
 
             session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['user_id']    = $user['user_id'];
             $_SESSION['first_name'] = $user['first_name'];
-            $_SESSION['full_name'] = trim(
-                $user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']
+            $_SESSION['last_name']  = $user['last_name'];
+            $_SESSION['full_name']  = trim(
+                $user['first_name'] . " " . ($user['middle_name'] ?? '') . " " . $user['last_name']
             );
-            $_SESSION['role'] = $user['role'];
+            $_SESSION['role']       = $user['role'];
 
             header("Location: dashboard.php");
             exit();
-
-        }else{
-            $message = "Wrong password";
         }
-
-    }else{
-        $message = "Account not found";
     }
 }
 ?>
@@ -63,6 +84,7 @@ if(isset($_POST['login'])){
     <title>Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
+    <?php echo turnstile_script(); ?>
 </head>
 <body>
 
@@ -75,7 +97,7 @@ if(isset($_POST['login'])){
         <div class="container">
             <div class="narrow">
 
-                <h1 class="heading" style="font-size:48px; font-weight:800; margin:0 0 20px;">Login.</h1>
+                <h1 style="font-size:48px; font-weight:800; margin:0 0 20px;">Login.</h1>
 
                 <div class="window">
                     <div class="window-bar">
@@ -86,13 +108,18 @@ if(isset($_POST['login'])){
                     <div class="window-body">
 
                         <?php if($message !== ""){ ?>
-                            <div class="alert alert-error">
+                            <div class="alert alert-<?php echo $messageType; ?>">
                                 <?php echo htmlspecialchars($message); ?>
+                                <?php if($showResend){ ?>
+                                    <br><a href="resend-verification.php">Resend verification email</a>
+                                <?php } ?>
                             </div>
                         <?php } ?>
 
                         <form method="POST">
+
                             <?php echo csrf_field(); ?>
+
                             <div class="form-group">
                                 <label for="email">Email</label>
                                 <input type="email"
@@ -110,6 +137,10 @@ if(isset($_POST['login'])){
                                        name="password"
                                        placeholder="Your password"
                                        required>
+                            </div>
+
+                            <div class="form-group">
+                                <?php echo turnstile_widget(); ?>
                             </div>
 
                             <div class="form-actions">
@@ -130,7 +161,7 @@ if(isset($_POST['login'])){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System by Alfred Ayeba
+        Campus Lost and Found System
     </footer>
 
 </body>

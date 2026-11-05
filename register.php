@@ -9,57 +9,71 @@ if(isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/captcha.php");
+require_once("includes/verification.php");
 
 $message = "";
 
 if(isset($_POST['register'])){
-    csrf_require();
-    $student_id  = trim($_POST['student_id']);
-    $first_name  = trim($_POST['first_name']);
-    $middle_name = trim($_POST['middle_name']);
-    $last_name   = trim($_POST['last_name']);
-    $email       = trim($_POST['email']);
-    $rawPassword = $_POST['password'];
 
-    // Middle name is optional, store NULL if left empty
+    csrf_require();
+
+    $student_id  = trim($_POST['student_id'] ?? '');
+    $first_name  = trim($_POST['first_name'] ?? '');
+    $middle_name = trim($_POST['middle_name'] ?? '');
+    $last_name   = trim($_POST['last_name'] ?? '');
+    $email       = trim($_POST['email'] ?? '');
+    $rawPassword = $_POST['password'] ?? '';
+
     if($middle_name === ""){
         $middle_name = null;
     }
 
-    if(strlen($rawPassword) < 6){
+    if(!turnstile_verify()){
 
-        $message = "Password must be at least 6 characters.";
+        $message = "Please complete the security check.";
+
+    }elseif($student_id === "" || $first_name === "" || $last_name === "" || $email === ""){
+
+        $message = "Please fill in all required fields.";
+
+    }elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+
+        $message = "Please enter a valid email address.";
+
+    }elseif(strlen($rawPassword) < 8){
+
+        $message = "Password must be at least 8 characters.";
 
     }else{
 
-        // Check email (prepared statement)
+        // Email already used?
         $stmt = mysqli_prepare($conn, "SELECT user_id FROM users WHERE email = ?");
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
-        $checkEmail = mysqli_stmt_get_result($stmt);
+        $emailTaken = mysqli_num_rows(mysqli_stmt_get_result($stmt)) > 0;
 
-        if(mysqli_num_rows($checkEmail) > 0){
+        // Student ID already used?
+        $stmt = mysqli_prepare($conn, "SELECT user_id FROM users WHERE student_id = ?");
+        mysqli_stmt_bind_param($stmt, "s", $student_id);
+        mysqli_stmt_execute($stmt);
+        $idTaken = mysqli_num_rows(mysqli_stmt_get_result($stmt)) > 0;
+
+        if($emailTaken){
 
             $message = "Email already exists.";
 
+        }elseif($idTaken){
+
+            $message = "Student ID already exists.";
+
         }else{
 
-            // Check student ID (prepared statement)
-            $stmt = mysqli_prepare($conn, "SELECT user_id FROM users WHERE student_id = ?");
-            mysqli_stmt_bind_param($stmt, "s", $student_id);
-            mysqli_stmt_execute($stmt);
-            $checkStudentId = mysqli_stmt_get_result($stmt);
+            $password = password_hash($rawPassword, PASSWORD_DEFAULT);
+            $role     = "student";
 
-            if(mysqli_num_rows($checkStudentId) > 0){
+            try{
 
-                $message = "Student ID already exists.";
-
-            }else{
-
-                $password = password_hash($rawPassword, PASSWORD_DEFAULT);
-                $role = "student";
-
-                // Insert new user (prepared statement)
                 $stmt = mysqli_prepare(
                     $conn,
                     "INSERT INTO users
@@ -71,13 +85,23 @@ if(isset($_POST['register'])){
                     "sssssss",
                     $student_id, $first_name, $middle_name, $last_name, $email, $password, $role
                 );
+                mysqli_stmt_execute($stmt);
 
-                if(mysqli_stmt_execute($stmt)){
-                    header("Location: login.php");
-                    exit();
-                }else{
-                    $message = "Something went wrong. Please try again.";
-                }
+                $newId = mysqli_insert_id($conn);
+
+                // If the email fails to send, the account still exists and the
+                // user can request a new link from the resend page.
+                issue_verification($conn, $newId, $email, $first_name);
+
+                header("Location: login.php?registered=1");
+                exit();
+
+            }catch(mysqli_sql_exception $e){
+
+                // 1062 = duplicate key (unique index caught a simultaneous signup)
+                $message = ($e->getCode() === 1062)
+                    ? "Email or Student ID already exists."
+                    : "Something went wrong. Please try again.";
             }
         }
     }
@@ -90,6 +114,7 @@ if(isset($_POST['register'])){
     <title>Student Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
+    <?php echo turnstile_script(); ?>
 </head>
 <body>
 
@@ -102,7 +127,7 @@ if(isset($_POST['register'])){
         <div class="container">
             <div class="narrow">
 
-                <h1 class="heading" style="font-size:48px; font-weight:800; margin:0 0 20px;">Register.</h1>
+                <h1 style="font-size:48px; font-weight:800; margin:0 0 20px;">Register.</h1>
 
                 <div class="window">
                     <div class="window-bar">
@@ -118,8 +143,10 @@ if(isset($_POST['register'])){
                             </div>
                         <?php } ?>
 
-                        <form action="" method="POST">
+                        <form method="POST">
+
                             <?php echo csrf_field(); ?>
+
                             <div class="form-group">
                                 <label for="student_id">Student ID</label>
                                 <input type="text" id="student_id" name="student_id"
@@ -156,8 +183,13 @@ if(isset($_POST['register'])){
 
                             <div class="form-group">
                                 <label for="password">Password</label>
-                                <input type="password" id="password" name="password" minlength="8" required>
+                                <input type="password" id="password" name="password"
+                                       minlength="8" autocomplete="new-password" required>
                                 <p class="form-hint">At least 8 characters.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <?php echo turnstile_widget(); ?>
                             </div>
 
                             <div class="form-actions">
@@ -178,7 +210,7 @@ if(isset($_POST['register'])){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System by Alfred Ayeba
+        Campus Lost and Found System
     </footer>
 
 </body>
