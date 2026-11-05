@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 include("includes/admin-guard.php");
 
 $validStatuses = ['lost', 'found', 'claimed', 'returned'];

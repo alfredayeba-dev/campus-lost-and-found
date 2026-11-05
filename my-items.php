@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 
 if(!isset($_SESSION['user_id'])){
     header("Location: login.php");
@@ -13,6 +13,8 @@ $user_id = $_SESSION['user_id'];
 
 // Handle status updates and deletes
 if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'])){
+
+    csrf_require();
 
     $item_id = (int) $_POST['item_id'];
 
@@ -146,6 +148,7 @@ $count  = mysqli_num_rows($result);
                                     <a class="btn" href="view-item.php?id=<?php echo (int) $item['item_id']; ?>">View</a>
                                     <?php if($item['status'] === 'lost'){ ?>
                                         <form method="POST">
+                                            <?php echo csrf_field(); ?>
                                             <input type="hidden" name="item_id" value="<?php echo (int) $item['item_id']; ?>">
                                             <button class="btn" type="submit" name="mark" value="returned">
                                                 Mark as Returned
@@ -153,6 +156,7 @@ $count  = mysqli_num_rows($result);
                                         </form>
                                     <?php }elseif($item['status'] === 'found'){ ?>
                                         <form method="POST">
+                                            <?php echo csrf_field(); ?>
                                             <input type="hidden" name="item_id" value="<?php echo (int) $item['item_id']; ?>">
                                             <button class="btn" type="submit" name="mark" value="claimed">
                                                 Mark as Claimed
@@ -161,6 +165,7 @@ $count  = mysqli_num_rows($result);
                                     <?php } ?>
 
                                     <form method="POST" onsubmit="return confirm('Delete this post?');">
+                                        <?php echo csrf_field(); ?>
                                         <input type="hidden" name="item_id" value="<?php echo (int) $item['item_id']; ?>">
                                         <button class="btn btn-danger" type="submit" name="delete" value="1">
                                             Delete

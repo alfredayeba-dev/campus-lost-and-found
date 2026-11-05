@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 
 // Already logged in? Go straight to the dashboard
 if(isset($_SESSION['user_id'])){
@@ -12,7 +12,13 @@ include("config/database.php");
 
 $message = "";
 
+if(isset($_GET['expired'])){
+    $message = "You were logged out for being inactive. Please log in again.";
+}
+
 if(isset($_POST['login'])){
+
+    csrf_require();
 
     $email = trim($_POST['email']);
     $password = $_POST['password'];
@@ -86,7 +92,7 @@ if(isset($_POST['login'])){
                         <?php } ?>
 
                         <form method="POST">
-
+                            <?php echo csrf_field(); ?>
                             <div class="form-group">
                                 <label for="email">Email</label>
                                 <input type="email"

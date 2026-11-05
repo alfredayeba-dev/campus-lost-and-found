@@ -48,16 +48,3 @@ if(!$guardRow || $guardRow['role'] !== 'admin'){
 }
 
 $_SESSION['role'] = $guardRow['role'];
-
-// Simple CSRF protection for admin actions
-if(empty($_SESSION['csrf'])){
-    $_SESSION['csrf'] = bin2hex(random_bytes(32));
-}
-
-function csrf_field(){
-    return '<input type="hidden" name="csrf" value="' . htmlspecialchars($_SESSION['csrf']) . '">';
-}
-
-function csrf_ok(){
-    return isset($_POST['csrf']) && hash_equals($_SESSION['csrf'], $_POST['csrf']);
-}

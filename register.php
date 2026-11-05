@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 
 // Already logged in? Go straight to the dashboard
 if(isset($_SESSION['user_id'])){
@@ -13,7 +13,7 @@ include("config/database.php");
 $message = "";
 
 if(isset($_POST['register'])){
-
+    csrf_require();
     $student_id  = trim($_POST['student_id']);
     $first_name  = trim($_POST['first_name']);
     $middle_name = trim($_POST['middle_name']);
@@ -119,7 +119,7 @@ if(isset($_POST['register'])){
                         <?php } ?>
 
                         <form action="" method="POST">
-
+                            <?php echo csrf_field(); ?>
                             <div class="form-group">
                                 <label for="student_id">Student ID</label>
                                 <input type="text" id="student_id" name="student_id"

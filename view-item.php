@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 
 if(!isset($_SESSION['user_id'])){
     header("Location: login.php");
@@ -44,6 +44,9 @@ $isOwner = $item && ((int) $item['user_id'] === (int) $_SESSION['user_id']);
         <a href="report-found-item.php">Report found</a>
         <a href="view-items.php">All items</a>
         <a href="my-items.php">My posts</a>
+        <?php if(($_SESSION['role'] ?? '') === 'admin'){ ?>
+            <a href="admin.php">Admin</a>
+        <?php } ?>
         <a href="logout.php" class="nav-logout">Logout</a>
     </nav>
 

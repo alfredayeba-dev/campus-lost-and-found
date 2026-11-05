@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 
 // Check login first, before running any queries
 if(!isset($_SESSION['user_id'])){

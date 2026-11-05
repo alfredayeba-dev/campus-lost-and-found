@@ -24,6 +24,8 @@ $categories = [
 
 if(isset($_POST['submit'])){
 
+    csrf_require();
+
     $title       = trim($_POST['title']);
     $category    = $_POST['category'];
     $description = trim($_POST['description']);
@@ -137,7 +139,7 @@ if(isset($_POST['submit'])){
                         <?php } ?>
 
                         <form method="POST" enctype="multipart/form-data">
-
+                            <?php echo csrf_field(); ?>
                             <div class="form-group">
                                 <label for="title">Item Title *</label>
                                 <input type="text" id="title" name="title" maxlength="150"

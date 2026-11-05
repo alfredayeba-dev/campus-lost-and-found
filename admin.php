@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 include("includes/admin-guard.php");
 
 // Item counts by status
@@ -75,7 +75,7 @@ $stats = [
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System
+        Campus Lost and Found System by Alfred Ayeba
     </footer>
 
 </body>

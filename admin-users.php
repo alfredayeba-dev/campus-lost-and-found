@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require_once("includes/security.php");
 include("includes/admin-guard.php");
 
 $myId = (int) $_SESSION['user_id'];
