@@ -1,0 +1,12 @@
+# Secrets and local settings
+.env
+
+# User-uploaded photos (never commit these)
+uploads/*
+!uploads/.gitkeep
+!uploads/.htaccess
+
+# Editor and OS junk
+.vscode/
+.DS_Store
+Thumbs.db
