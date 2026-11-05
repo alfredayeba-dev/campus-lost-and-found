@@ -111,7 +111,8 @@ if(isset($_POST['submit'])){
         <?php if(($_SESSION['role'] ?? '') === 'admin'){ ?>
             <a href="admin.php">Admin</a>
         <?php } ?>
-        <a href="logout.php">Logout</a>
+        <a href="profile.php">Profile</a>
+        <a href="logout.php" class="nav-logout">Logout</a>
     </nav>
 
     <section class="section hatch">

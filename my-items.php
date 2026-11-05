@@ -88,7 +88,8 @@ $count  = mysqli_num_rows($result);
         <?php if(($_SESSION['role'] ?? '') === 'admin'){ ?>
             <a href="admin.php">Admin</a>
         <?php } ?>
-        <a href="logout.php">Logout</a>
+        <a href="profile.php">Profile</a>
+        <a href="logout.php" class="nav-logout">Logout</a>
     </nav>
 
     <section class="section hatch">
@@ -100,6 +101,9 @@ $count  = mysqli_num_rows($result);
 
             <?php if(isset($_GET['posted'])){ ?>
                 <div class="alert alert-success">Your report was posted successfully.</div>
+            <?php } ?>
+            <?php if(isset($_GET['updated'])){ ?>
+                <div class="alert alert-success">Item updated successfully.</div>
             <?php } ?>
 
             <?php if($count === 0){ ?>
@@ -146,6 +150,7 @@ $count  = mysqli_num_rows($result);
 
                                 <div class="item-actions">
                                     <a class="btn" href="view-item.php?id=<?php echo (int) $item['item_id']; ?>">View</a>
+                                    <a class="btn" href="edit-item.php?id=<?php echo (int)$item['item_id']; ?>">Edit</a>
                                     <?php if($item['status'] === 'lost'){ ?>
                                         <form method="POST">
                                             <?php echo csrf_field(); ?>

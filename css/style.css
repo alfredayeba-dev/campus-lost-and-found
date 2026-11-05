@@ -722,3 +722,7 @@ h2.heading {
 .window-title {
     display: none;
 }
+
+.window + .window {
+    margin-top: 40px;
+}

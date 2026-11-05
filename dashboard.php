@@ -60,6 +60,7 @@ $recent = mysqli_query(
         <?php if(($_SESSION['role'] ?? '') === 'admin'){ ?>
             <a href="admin.php">Admin</a>
         <?php } ?>
+        <a href="profile.php">Profile</a>
         <a href="logout.php" class="nav-logout">Logout</a>
     </nav>
 

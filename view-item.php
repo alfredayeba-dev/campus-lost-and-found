@@ -47,6 +47,7 @@ $isOwner = $item && ((int) $item['user_id'] === (int) $_SESSION['user_id']);
         <?php if(($_SESSION['role'] ?? '') === 'admin'){ ?>
             <a href="admin.php">Admin</a>
         <?php } ?>
+        <a href="profile.php">Profile</a>
         <a href="logout.php" class="nav-logout">Logout</a>
     </nav>
 

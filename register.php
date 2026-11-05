@@ -156,8 +156,8 @@ if(isset($_POST['register'])){
 
                             <div class="form-group">
                                 <label for="password">Password</label>
-                                <input type="password" id="password" name="password" minlength="6" required>
-                                <p class="form-hint">At least 6 characters.</p>
+                                <input type="password" id="password" name="password" minlength="8" required>
+                                <p class="form-hint">At least 8 characters.</p>
                             </div>
 
                             <div class="form-actions">
