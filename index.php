@@ -1,5 +1,3 @@
 <?php
-include("config/database.php");
-
-echo "Database connected successfully!";
-?>
+header('Location: login.php');
+exit;
