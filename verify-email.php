@@ -45,6 +45,7 @@ if(is_string($token) && preg_match('/^[a-f0-9]{64}$/', $token)){
 <html>
 <head>
     <title>Verify Email</title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
 </head>

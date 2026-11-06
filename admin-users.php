@@ -2,6 +2,7 @@
 
 require_once("includes/security.php");
 include("includes/admin-guard.php");
+require_once("includes/images.php");
 
 $myId = (int) $_SESSION['user_id'];
 
@@ -98,6 +99,7 @@ $count  = mysqli_num_rows($result);
 <html>
 <head>
     <title>Manage Users</title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
 </head>

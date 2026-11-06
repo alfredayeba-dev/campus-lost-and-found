@@ -49,6 +49,7 @@ if(isset($_POST['resend'])){
 <html>
 <head>
     <title>Resend Verification</title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
     <?php echo turnstile_script(); ?>

@@ -34,6 +34,7 @@ $isOwner = $item && ((int) $item['user_id'] === (int) $_SESSION['user_id']);
 <html>
 <head>
     <title><?php echo $item ? htmlspecialchars($item['title']) : "Item not found"; ?></title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
 </head>

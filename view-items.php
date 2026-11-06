@@ -55,6 +55,7 @@ $count  = mysqli_num_rows($result);
 <html>
 <head>
     <title>All Items</title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
 </head>

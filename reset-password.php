@@ -78,6 +78,7 @@ if($user && isset($_POST['reset'])){
 <html>
 <head>
     <title>Reset Password</title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="referrer" content="no-referrer">
     <link rel="stylesheet" href="css/style.css">

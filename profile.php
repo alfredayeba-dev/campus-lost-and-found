@@ -229,6 +229,7 @@ if(isset($_POST['change_password'])){
 <html>
 <head>
     <title>My Profile</title>
+    <?php include("includes/head.php"); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
 </head>
