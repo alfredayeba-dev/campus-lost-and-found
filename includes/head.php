@@ -3,7 +3,7 @@
 
 <link rel="icon"
       type="image/png"
-      href="images/favicon.png">
+      href="images/map-icon.png">
 
 <link rel="stylesheet"
       href="css/style.css">
