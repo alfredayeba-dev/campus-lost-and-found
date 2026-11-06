@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 06, 2026 at 10:48 AM
+-- Generation Time: Nov 06, 2026 at 11:50 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,6 +42,19 @@ CREATE TABLE `items` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `login_attempts`
+--
+
+CREATE TABLE `login_attempts` (
+  `id` int(11) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `ip` varchar(45) NOT NULL,
+  `attempted_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -59,7 +72,10 @@ CREATE TABLE `users` (
   `verify_token_hash` char(64) DEFAULT NULL,
   `verify_expires` datetime DEFAULT NULL,
   `verify_sent_at` datetime DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `reset_token_hash` char(64) DEFAULT NULL,
+  `reset_expires` datetime DEFAULT NULL,
+  `reset_sent_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -72,6 +88,14 @@ CREATE TABLE `users` (
 ALTER TABLE `items`
   ADD PRIMARY KEY (`item_id`),
   ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_ip_time` (`ip`,`attempted_at`),
+  ADD KEY `idx_email_time` (`email`,`attempted_at`);
 
 --
 -- Indexes for table `users`
@@ -90,6 +114,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `items`
   MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`

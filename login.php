@@ -10,10 +10,12 @@ if(isset($_SESSION['user_id'])){
 
 include("config/database.php");
 require_once("includes/captcha.php");
+require_once("includes/ratelimit.php");
 
 $message     = "";
 $messageType = "error";
 $showResend  = false;
+$ip          = client_ip();
 
 if(isset($_GET['expired'])){
     $message = "You were logged out for being inactive. Please log in again.";
@@ -34,23 +36,25 @@ if(isset($_POST['login'])){
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if(!turnstile_verify()){
+    if(login_is_locked($conn, $email, $ip)){
 
-        $message = "Please complete the captcha.";
+        $message = "Too many failed attempts. Please wait about " . LOGIN_WINDOW_MINUTES . " minutes and try again.";
+
+    }elseif(!turnstile_verify()){
+
+        $message = "Please complete the security check.";
 
     }else{
 
         $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        $user = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-        $user = mysqli_fetch_assoc($result);
-
-        // One message for "no such account" and "wrong password", so attackers
-        // can't use the form to discover which emails are registered.
+        // One message for "no such account" and "wrong password"
         if(!$user || !password_verify($password, $user['password'])){
 
+            login_record_failure($conn, $email, $ip);
             $message = "Invalid email or password.";
 
         }elseif(empty($user['email_verified_at'])){
@@ -60,6 +64,8 @@ if(isset($_POST['login'])){
             $showResend = true;
 
         }else{
+
+            login_clear($conn, $email, $ip);
 
             session_regenerate_id(true);
 
@@ -137,6 +143,7 @@ if(isset($_POST['login'])){
                                        name="password"
                                        placeholder="Your password"
                                        required>
+                                <p class="form-hint"><a href="forgot-password.php">Forgot password?</a></p>
                             </div>
 
                             <div class="form-group">
@@ -161,7 +168,7 @@ if(isset($_POST['login'])){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System by Allfred Ayeba
+        Campus Lost and Found System by Alfred Ayeba
     </footer>
 
 </body>
