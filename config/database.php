@@ -1,15 +1,51 @@
 <?php
-// Read settings from the server's environment.
-// The values after ?: are fallbacks for local XAMPP only.
-$host = getenv('DB_HOST') ?: 'localhost';
-$user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: '';
-$name = getenv('DB_NAME') ?: 'campus_lost_found';
+require_once __DIR__ . '/../includes/env.php';
 
-$conn = mysqli_connect($host, $user, $pass, $name);
+$host = env('DB_HOST', 'localhost');
+$user = env('DB_USER', 'root');
+$pass = env('DB_PASS', '');
+$name = env('DB_NAME', 'campus_lost_found');
+$port = (int) env('DB_PORT', 3306);
+$ssl  = env('DB_SSL', '0') === '1';
 
-if(!$conn){
-    // Never print mysqli_connect_error() on a live site, it can leak details
+$conn = mysqli_init();
+
+if($ssl){
+
+    // Use DB_CA if you set it, otherwise look in the usual places
+    $ca = env('DB_CA', '');
+
+    if($ca === ''){
+        $candidates = [
+            '/etc/ssl/certs/ca-certificates.crt',        // Linux / Docker / Render
+            'C:/xampp/apache/bin/curl-ca-bundle.crt',    // XAMPP on Windows
+            'C:/xampp/php/extras/ssl/cacert.pem'         // XAMPP on Windows (other versions)
+        ];
+
+        foreach($candidates as $path){
+            if(is_file($path)){
+                $ca = $path;
+                break;
+            }
+        }
+    }
+
+    mysqli_ssl_set($conn, null, null, ($ca !== '' ? $ca : null), null, null);
+}
+
+$connected = false;
+
+try{
+    $connected = mysqli_real_connect(
+        $conn, $host, $user, $pass, $name, $port, null,
+        $ssl ? MYSQLI_CLIENT_SSL : 0
+    );
+}catch(mysqli_sql_exception $e){
+    error_log('DB connection failed: ' . $e->getMessage());
+}
+
+if(!$connected){
+    http_response_code(500);
     die("Database connection failed.");
 }
 

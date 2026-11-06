@@ -8,6 +8,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/images.php");
 
 $user_id = $_SESSION['user_id'];
 
@@ -50,9 +51,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'])){
             mysqli_stmt_bind_param($stmt, "ii", $item_id, $user_id);
             mysqli_stmt_execute($stmt);
 
-            if(!empty($row['image']) && file_exists("uploads/" . $row['image'])){
-                unlink("uploads/" . $row['image']);
-            }
+            image_delete($row['image']);
         }
     }
 
@@ -128,7 +127,7 @@ $count  = mysqli_num_rows($result);
 
                             <?php if(!empty($item['image'])){ ?>
                                 <img class="item-image"
-                                     src="uploads/<?php echo htmlspecialchars($item['image']); ?>"
+                                     src="<?php echo htmlspecialchars(image_url($item['image'])); ?>"
                                      alt="Item photo">
                             <?php }else{ ?>
                                 <div class="item-placeholder">No photo</div>

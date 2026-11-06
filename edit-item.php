@@ -8,6 +8,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/images.php");
 
 $user_id = $_SESSION['user_id'];
 $message = "";
@@ -181,7 +182,7 @@ if(isset($_POST['submit'])){
                             <label>Current Photo</label>
 
                             <img
-                                src="uploads/<?php echo htmlspecialchars($item['image']); ?>"
+                                src="<?php echo htmlspecialchars(image_url($item['image'])); ?>"
                                 alt="Item image"
                                 style="
                                     width:100%;

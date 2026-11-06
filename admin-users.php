@@ -55,9 +55,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         mysqli_stmt_execute($stmt);
 
         foreach($images as $img){
-            if(file_exists("uploads/" . $img)){
-                unlink("uploads/" . $img);
-            }
+            image_delete($img);
         }
 
         $_SESSION['flash'] = "User and their posts deleted.";

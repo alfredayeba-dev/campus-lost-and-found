@@ -9,6 +9,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/images.php");
 
 // Count items by status in one query
 $counts = ['lost' => 0, 'found' => 0, 'claimed' => 0, 'returned' => 0];
@@ -181,7 +182,7 @@ $recent = mysqli_query(
 
                             <?php if(!empty($item['image'])){ ?>
                                 <img class="item-image"
-                                     src="uploads/<?php echo htmlspecialchars($item['image']); ?>"
+                                     src="<?php echo htmlspecialchars(image_url($item['image'])); ?>"
                                      alt="Item photo">
                             <?php }else{ ?>
                                 <div class="item-placeholder">No photo</div>

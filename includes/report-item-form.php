@@ -8,6 +8,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/images.php");
 
 $message = "";
 
@@ -26,67 +27,51 @@ if(isset($_POST['submit'])){
 
     csrf_require();
 
-    $title       = trim($_POST['title']);
-    $category    = $_POST['category'];
-    $description = trim($_POST['description']);
-    $location    = trim($_POST['location']);
-    $user_id     = $_SESSION['user_id'];
-    $imageName   = null;
+    $title       = trim($_POST['title'] ?? '');
+    $category    = $_POST['category'] ?? '';
+    $description = trim($_POST['description'] ?? '');
+    $location    = trim($_POST['location'] ?? '');
+    $user_id     = (int) $_SESSION['user_id'];
+    $imageRef    = null;
 
     if($title === "" || $location === "" || !in_array($category, $categories)){
         $message = "Please fill in the title, category and location.";
     }
 
-    // Handle optional image upload
-    if($message === "" && isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE){
+    // Optional photo
+    if($message === ""){
+        $uploaded = image_upload($_FILES['image'] ?? null, $imgError);
 
-        if($_FILES['image']['error'] !== UPLOAD_ERR_OK){
-            $message = "Image upload failed. Please try again.";
-        }elseif($_FILES['image']['size'] > 2 * 1024 * 1024){
-            $message = "Image must be smaller than 2MB.";
-        }else{
-            $finfo   = new finfo(FILEINFO_MIME_TYPE);
-            $mime    = $finfo->file($_FILES['image']['tmp_name']);
-            $allowed = [
-                'image/jpeg' => 'jpg',
-                'image/png'  => 'png',
-                'image/gif'  => 'gif'
-            ];
-
-            if(!isset($allowed[$mime])){
-                $message = "Only JPG, PNG or GIF images are allowed.";
-            }else{
-                if(!is_dir("uploads")){
-                    mkdir("uploads", 0755, true);
-                }
-
-                $imageName = uniqid("item_", true) . "." . $allowed[$mime];
-
-                if(!move_uploaded_file($_FILES['image']['tmp_name'], "uploads/" . $imageName)){
-                    $message = "Could not save the image.";
-                    $imageName = null;
-                }
-            }
+        if($uploaded === null){
+            $message = $imgError;
+        }elseif($uploaded !== "none"){
+            $imageRef = $uploaded;
         }
     }
 
     if($message === ""){
 
-        $stmt = mysqli_prepare(
-            $conn,
-            "INSERT INTO items (title, category, description, status, location, image, user_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?)"
-        );
-        mysqli_stmt_bind_param(
-            $stmt,
-            "ssssssi",
-            $title, $category, $description, $type, $location, $imageName, $user_id
-        );
+        try{
 
-        if(mysqli_stmt_execute($stmt)){
+            $stmt = mysqli_prepare(
+                $conn,
+                "INSERT INTO items (title, category, description, status, location, image, user_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)"
+            );
+            mysqli_stmt_bind_param(
+                $stmt,
+                "ssssssi",
+                $title, $category, $description, $type, $location, $imageRef, $user_id
+            );
+            mysqli_stmt_execute($stmt);
+
             header("Location: my-items.php?posted=1");
             exit();
-        }else{
+
+        }catch(mysqli_sql_exception $e){
+
+            // Don't leave an orphaned photo behind
+            image_delete($imageRef);
             $message = "Something went wrong. Please try again.";
         }
     }
@@ -140,7 +125,9 @@ if(isset($_POST['submit'])){
                         <?php } ?>
 
                         <form method="POST" enctype="multipart/form-data">
+
                             <?php echo csrf_field(); ?>
+
                             <div class="form-group">
                                 <label for="title">Item Title *</label>
                                 <input type="text" id="title" name="title" maxlength="150"

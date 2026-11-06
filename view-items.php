@@ -8,6 +8,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/images.php");
 
 $search = trim($_GET['search'] ?? '');
 $status = $_GET['status'] ?? '';
@@ -121,7 +122,7 @@ $count  = mysqli_num_rows($result);
 
                             <?php if(!empty($item['image'])){ ?>
                                 <img class="item-image"
-                                     src="uploads/<?php echo htmlspecialchars($item['image']); ?>"
+                                     src="<?php echo htmlspecialchars(image_url($item['image'])); ?>"
                                      alt="Item photo">
                             <?php }else{ ?>
                                 <div class="item-placeholder">No photo</div>

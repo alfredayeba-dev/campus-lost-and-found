@@ -2,6 +2,7 @@
 
 require_once("includes/security.php");
 include("includes/admin-guard.php");
+require_once("includes/images.php");
 
 $validStatuses = ['lost', 'found', 'claimed', 'returned'];
 
@@ -37,9 +38,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             mysqli_stmt_bind_param($stmt, "i", $item_id);
             mysqli_stmt_execute($stmt);
 
-            if(!empty($row['image']) && file_exists("uploads/" . $row['image'])){
-                unlink("uploads/" . $row['image']);
-            }
+           image_delete($row['image']);
+
             $_SESSION['flash'] = "Item deleted.";
         }
     }
@@ -165,7 +165,7 @@ $count  = mysqli_num_rows($result);
                                     <td>
                                         <?php if(!empty($item['image'])){ ?>
                                             <img class="thumb"
-                                                 src="uploads/<?php echo htmlspecialchars($item['image']); ?>"
+                                                 src="<?php echo htmlspecialchars(image_url($item['image'])); ?>"
                                                  alt="">
                                         <?php }else{ ?>
                                             &mdash;

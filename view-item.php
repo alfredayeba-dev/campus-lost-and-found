@@ -8,6 +8,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/images.php");
 
 $item_id = (int) ($_GET['id'] ?? 0);
 
@@ -74,7 +75,7 @@ $isOwner = $item && ((int) $item['user_id'] === (int) $_SESSION['user_id']);
                         <div class="detail-media">
                             <?php if(!empty($item['image'])){ ?>
                                 <img class="detail-image"
-                                     src="uploads/<?php echo htmlspecialchars($item['image']); ?>"
+                                     src="<?php echo htmlspecialchars(image_url($item['image'])); ?>"
                                      alt="Item photo">
                             <?php }else{ ?>
                                 <div class="detail-placeholder">No photo</div>
