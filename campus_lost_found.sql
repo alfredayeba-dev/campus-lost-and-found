@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 05, 2026 at 12:23 PM
+-- Generation Time: Nov 06, 2026 at 10:48 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -53,7 +53,12 @@ CREATE TABLE `users` (
   `last_name` varchar(50) NOT NULL,
   `role` enum('student','admin') DEFAULT 'student',
   `email` varchar(100) DEFAULT NULL,
+  `pending_email` varchar(100) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
+  `email_verified_at` datetime DEFAULT NULL,
+  `verify_token_hash` char(64) DEFAULT NULL,
+  `verify_expires` datetime DEFAULT NULL,
+  `verify_sent_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -72,7 +77,9 @@ ALTER TABLE `items`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`user_id`);
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `student_id` (`student_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables

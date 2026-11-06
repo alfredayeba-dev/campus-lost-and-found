@@ -36,7 +36,7 @@ if(isset($_POST['login'])){
 
     if(!turnstile_verify()){
 
-        $message = "Please complete the security check.";
+        $message = "Please complete the captcha.";
 
     }else{
 
@@ -161,7 +161,7 @@ if(isset($_POST['login'])){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System
+        Campus Lost and Found System by Allfred Ayeba
     </footer>
 
 </body>

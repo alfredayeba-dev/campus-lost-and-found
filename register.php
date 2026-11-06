@@ -31,7 +31,7 @@ if(isset($_POST['register'])){
 
     if(!turnstile_verify()){
 
-        $message = "Please complete the security check.";
+        $message = "Please complete the captcha.";
 
     }elseif($student_id === "" || $first_name === "" || $last_name === "" || $email === ""){
 
@@ -210,7 +210,7 @@ if(isset($_POST['register'])){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System
+        Campus Lost and Found System by Alfred Ayeba
     </footer>
 
 </body>

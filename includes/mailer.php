@@ -59,3 +59,9 @@ function send_mail($to, $subject, $html, $text){
         return false;
     }
 }
+        if(env('MAIL_DEBUG', '0') === '1'){
+            $mail->SMTPDebug   = 2;
+            $mail->Debugoutput = function($str){
+                error_log('SMTP: ' . trim($str));
+            };
+        }

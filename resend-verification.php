@@ -108,7 +108,7 @@ if(isset($_POST['resend'])){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System
+        Campus Lost and Found System by Alfred Ayeba
     </footer>
 
 </body>

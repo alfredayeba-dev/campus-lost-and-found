@@ -8,6 +8,7 @@ if(!isset($_SESSION['user_id'])){
 }
 
 include("config/database.php");
+require_once("includes/verification.php");
 
 $user_id = (int) $_SESSION['user_id'];
 
@@ -84,39 +85,82 @@ if(isset($_POST['submit'])){
             // Store NULL for an empty middle name, same as register.php
             $middleToSave = ($form['middle_name'] === "") ? null : $form['middle_name'];
 
-            try{
+            // Did they type a different email from the one on file?
+            $emailChanged = (strcasecmp($form['email'], $user['email'] ?? '') !== 0);
+            $canSend      = true;
 
+            // Stop people using this form to spam emails at strangers
+            if($emailChanged){
                 $stmt = mysqli_prepare(
                     $conn,
-                    "UPDATE users
-                     SET first_name = ?, middle_name = ?, last_name = ?, email = ?
-                     WHERE user_id = ?"
+                    "SELECT (verify_sent_at IS NULL OR verify_sent_at < DATE_SUB(NOW(), INTERVAL 60 SECOND)) AS can_send
+                     FROM users WHERE user_id = ?"
                 );
-                mysqli_stmt_bind_param(
-                    $stmt,
-                    "ssssi",
-                    $form['first_name'],
-                    $middleToSave,
-                    $form['last_name'],
-                    $form['email'],
-                    $user_id
-                );
+                mysqli_stmt_bind_param($stmt, "i", $user_id);
                 mysqli_stmt_execute($stmt);
+                $canSend = (bool) (mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['can_send'] ?? 0);
+            }
 
-                // Keep the session in step with the database
-                $_SESSION['first_name'] = $form['first_name'];
-                $_SESSION['last_name']  = $form['last_name'];
-                $_SESSION['full_name']  = trim(
-                    $form['first_name'] . " " . $form['middle_name'] . " " . $form['last_name']
-                );
+            if(!$canSend){
 
-                header("Location: profile.php?updated=1");
-                exit();
+                $message = "Please wait a minute before changing your email again.";
 
-            }catch(mysqli_sql_exception $e){
+            }else{
 
-                $message = "Unable to update profile. Please try again.";
+                try{
 
+                    // Names change immediately
+                    $stmt = mysqli_prepare(
+                        $conn,
+                        "UPDATE users
+                         SET first_name = ?, middle_name = ?, last_name = ?
+                         WHERE user_id = ?"
+                    );
+                    mysqli_stmt_bind_param(
+                        $stmt,
+                        "sssi",
+                        $form['first_name'],
+                        $middleToSave,
+                        $form['last_name'],
+                        $user_id
+                    );
+                    mysqli_stmt_execute($stmt);
+
+                    // Keep the session in step with the database
+                    $_SESSION['first_name'] = $form['first_name'];
+                    $_SESSION['last_name']  = $form['last_name'];
+                    $_SESSION['full_name']  = trim(
+                        $form['first_name'] . " " . $form['middle_name'] . " " . $form['last_name']
+                    );
+
+                    if($emailChanged){
+
+                        // The new address waits in pending_email until its link is clicked.
+                        // Your current email keeps working until then.
+                        $stmt = mysqli_prepare($conn, "UPDATE users SET pending_email = ? WHERE user_id = ?");
+                        mysqli_stmt_bind_param($stmt, "si", $form['email'], $user_id);
+                        mysqli_stmt_execute($stmt);
+
+                        issue_verification($conn, $user_id, $form['email'], $form['first_name']);
+
+                        header("Location: profile.php?email_pending=1");
+
+                    }else{
+
+                        // Typed their current email again: cancel any pending change
+                        $stmt = mysqli_prepare($conn, "UPDATE users SET pending_email = NULL WHERE user_id = ?");
+                        mysqli_stmt_bind_param($stmt, "i", $user_id);
+                        mysqli_stmt_execute($stmt);
+
+                        header("Location: profile.php?updated=1");
+                    }
+
+                    exit();
+
+                }catch(mysqli_sql_exception $e){
+
+                    $message = "Unable to update profile. Please try again.";
+                }
             }
         }
     }
@@ -175,7 +219,6 @@ if(isset($_POST['change_password'])){
         }catch(mysqli_sql_exception $e){
 
             $passwordMessage = "Unable to update password. Please try again.";
-
         }
     }
 }
@@ -229,6 +272,13 @@ if(isset($_POST['change_password'])){
                             <div class="alert alert-success">Profile updated successfully.</div>
                         <?php } ?>
 
+                        <?php if(isset($_GET['email_pending'])){ ?>
+                            <div class="alert alert-success">
+                                Profile saved. We sent a link to your new email address,
+                                and your email changes once you click it.
+                            </div>
+                        <?php } ?>
+
                         <?php if($message !== ""){ ?>
                             <div class="alert alert-error"><?php echo htmlspecialchars($message); ?></div>
                         <?php } ?>
@@ -278,6 +328,14 @@ if(isset($_POST['change_password'])){
                                        name="email"
                                        value="<?php echo htmlspecialchars($form['email']); ?>"
                                        required>
+
+                                <?php if(!empty($user['pending_email'])){ ?>
+                                    <p class="form-hint">
+                                        Pending change to <?php echo htmlspecialchars($user['pending_email']); ?>.
+                                        Check that inbox for the link. Until you click it, your
+                                        current email stays active.
+                                    </p>
+                                <?php } ?>
                             </div>
 
                             <div class="form-actions">
@@ -290,7 +348,7 @@ if(isset($_POST['change_password'])){
                     </div>
                 </div>
 
-                <!-- ============ Card 2: Security (spaced out) ============ -->
+                <!-- ============ Card 2: Security ============ -->
                 <div class="window" style="margin-top:40px;">
 
                     <div class="window-bar">

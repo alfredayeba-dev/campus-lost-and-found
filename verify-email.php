@@ -11,21 +11,33 @@ if(is_string($token) && preg_match('/^[a-f0-9]{64}$/', $token)){
 
     $hash = hash('sha256', $token);
 
-    // One atomic update: valid, unexpired, not yet verified
-    $stmt = mysqli_prepare(
-        $conn,
-        "UPDATE users
-         SET email_verified_at = NOW(),
-             verify_token_hash = NULL,
-             verify_expires    = NULL
-         WHERE verify_token_hash = ?
-           AND verify_expires > NOW()
-           AND email_verified_at IS NULL"
-    );
-    mysqli_stmt_bind_param($stmt, "s", $hash);
-    mysqli_stmt_execute($stmt);
+    try{
 
-    $ok = (mysqli_stmt_affected_rows($stmt) === 1);
+        // Handles first-time verification AND a pending email change.
+        // email = COALESCE(pending_email, email) must stay BEFORE
+        // pending_email = NULL, because MySQL applies SET items left to right.
+        $stmt = mysqli_prepare(
+            $conn,
+            "UPDATE users
+             SET email             = COALESCE(pending_email, email),
+                 pending_email     = NULL,
+                 email_verified_at = NOW(),
+                 verify_token_hash = NULL,
+                 verify_expires    = NULL
+             WHERE verify_token_hash = ?
+               AND verify_expires > NOW()
+               AND (email_verified_at IS NULL OR pending_email IS NOT NULL)"
+        );
+        mysqli_stmt_bind_param($stmt, "s", $hash);
+        mysqli_stmt_execute($stmt);
+
+        $ok = (mysqli_stmt_affected_rows($stmt) === 1);
+
+    }catch(mysqli_sql_exception $e){
+
+        // For example, someone else claimed that address in the meantime
+        $ok = false;
+    }
 }
 ?>
 
@@ -85,7 +97,7 @@ if(is_string($token) && preg_match('/^[a-f0-9]{64}$/', $token)){
     </section>
 
     <footer class="footer">
-        Campus Lost and Found System
+        Campus Lost and Found System by Alfred Ayeba
     </footer>
 
 </body>
