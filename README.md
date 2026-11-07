@@ -8,7 +8,7 @@
 | **Institution** | Nile University |
 | **Course** | SEN100, Software Engineering |
 | **Date** | November 2026 |
-| **Live application** | https://campus-lost-and-found-mpua.onrender.com(https://campus-lost-and-found-mpua.onrender.com) |
+| **Live application** | https://campus-lost-and-found-mpua.onrender.com |
 | **Source code** | https://github.com/alfredayeba-dev/campus-lost-and-found |
 | **Status** | Complete and deployed |
 
