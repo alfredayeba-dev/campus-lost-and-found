@@ -449,7 +449,7 @@ Artificial intelligence tools were used during this project. The tools, the exte
 
 ## 18. Licence
 
-This project was produced for academic purposes. [Specify a licence, for example MIT, or state "All rights reserved" if the institution requires it.]
+This project was produced for academic purposes.
 
 ---
 
